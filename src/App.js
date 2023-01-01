@@ -1,25 +1,20 @@
-import logo from './logo.svg';
-import './App.css';
+import Modal from "modals/Modal";
+import { Toaster } from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { useRoutes } from "react-router-dom";
+import { routes } from "routes";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const showRoutes = useRoutes(routes);
+
+  const {current:modal} = useSelector(state => state.modals)
+
+  return <>
+  <Toaster position="top-right" />
+  {modal && <Modal name={modal} />}
+  
+    {showRoutes}
+  </> ;
 }
 
 export default App;
