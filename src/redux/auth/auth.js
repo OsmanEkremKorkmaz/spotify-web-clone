@@ -1,7 +1,7 @@
 const { createSlice } = require("@reduxjs/toolkit");
 
 const initialState= {
-    user:false
+    user:null
 }
 
 const auth = createSlice({

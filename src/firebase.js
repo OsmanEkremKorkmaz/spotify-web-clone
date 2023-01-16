@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "firebase/auth";
-import { doc, getDoc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
-import { getDownloadURL, getStorage, ref, uploadBytes, uploadBytesResumable } from "firebase/storage";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, updateCurrentUser } from "firebase/auth";
+import { addDoc, collection, doc, getDoc, getDocs, getFirestore, setDoc, updateDoc } from "firebase/firestore";
+import { getDownloadURL, getStorage, ref as storageRef, uploadBytes, uploadBytesResumable } from "firebase/storage";
+import { child, get, getDatabase, ref, remove, set, update } from "firebase/database";
 import toast from "react-hot-toast";
 import store from "./redux/store";
 import { userHandle } from "utils";
@@ -18,6 +19,7 @@ const firebaseConfig = {
     storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
     messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
     appId: process.env.REACT_APP_APP_ID,
+    databaseURL: process.env.REACT_APP_DATABASE_URL,
 };
 
 
@@ -26,11 +28,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth();
 const storage = getStorage(app);
+const realtimeDB = getDatabase(app);
 
 
 export const updateProfilePhoto = async (file) => {
     
-    const storageRef = ref(storage, "profilePhotos/" + auth.currentUser.uid)
+    const storage_ref = storageRef(storage, "profilePhotos/" + auth.currentUser.uid)
     const userRef = doc(db,"users",auth.currentUser.uid)
     if(!file){
         const res = await updateDoc(userRef,{
@@ -41,19 +44,23 @@ export const updateProfilePhoto = async (file) => {
     const metadata = {
         contentType: 'image/jpeg',
     };
-    const uploadTask = uploadBytes(storageRef, file, metadata);
-    const imgUrl = await getDownloadURL(storageRef)
+    const uploadTask = uploadBytes(storage_ref, file, metadata);
+    const imgUrl = await getDownloadURL(storage_ref)
+    updateProfile(auth.currentUser, {
+        photoURL: imgUrl
+    })
     const res = await updateDoc(userRef,{
         profilePhoto:imgUrl
     })
     return res
 }
+
         
 export const updateProfileData = async (data) => {
     try {
-        const ref = doc(db,"users",auth.currentUser.uid)
+        const ref = doc(db, "users", auth.currentUser.uid)
         const res = await updateDoc(ref,data)
-        const dbUser = await getDoc(doc(db, "users", auth.currentUser.uid));
+        const dbUser = await getDoc(ref);
         userHandle({ uid:auth.currentUser.uid,  ...dbUser.data()})
         return res
     } catch (e) {
@@ -61,15 +68,114 @@ export const updateProfileData = async (data) => {
     }
 }
 
+export const updateRedux = async () => {
+    const user = auth.currentUser
+    const dbUser = await getUserInfo(user.uid)
+        let data = {
+            uid: user.uid,
+            email: user.email,
+            emailVerified: user.emailVerified,
+            ...dbUser,
+        }
+        userHandle(data)
+}
 
-export const getUserInfo = async (user_id) => {
+
+export const getUserInfo = async (id) => {
     try {
-        const user = await getDoc(doc(db, "users", user_id))
-        return  {uid:user_id ,  ...user.data()}
+        const user = await getDoc(doc(db, "users", id))
+        return  {uid:id ,  ...user.data()}
     } catch(e) {
         toast.error(e)
     }
 }
+
+export const getPlaylist = async (id) => {
+    try {
+        const docRef = doc(db, "playlists", id)
+        const playlist = await getDoc(docRef);
+        return playlist.data()
+    } catch(e) {
+        console.log(e)
+    }
+}
+export const getAllSongs = async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "songs"));
+        return querySnapshot
+    } catch(e) {
+        console.log(e)
+    }
+}
+
+export const getSongById = async (id) => {
+    try {
+        const querySnapshot = await getDoc(doc(db, "songs", id));
+        return querySnapshot.data()
+    } catch(e) {
+        console.log(e)
+    }
+}
+
+export const addSong = async (data) => {
+    try {
+        const docRef = await addDoc(collection(db, "songs"), {
+            name:data.name,
+            album:data.album,
+            artist:data.artist,
+            cover:"",
+            src:"",
+            duration:0
+        });
+        console.log(docRef.id);
+        const cover_ref = storageRef(storage, "covers/" + docRef.id)
+        const coverMetadata = {
+            contentType: 'image/jpeg',
+        };
+
+        const coverUploadTask = await uploadBytes(cover_ref, data.img, coverMetadata);
+        const imgUrl = await getDownloadURL(cover_ref)
+
+
+        const song_ref = storageRef(storage, "songs/" + docRef.id)
+        const songMetadata = {
+            contentType: 'audio/mp3',
+        };
+        const srcUploadTask = await uploadBytes(song_ref, data.src, songMetadata);
+        const src = await getDownloadURL(song_ref)
+        let duration = 0
+        const res = await updateDoc(docRef,{
+            cover:imgUrl,
+            src,
+            duration,
+            id:docRef.id
+        })
+
+        return res
+    } catch(e) {
+        console.log(e)
+    }
+}
+
+export const likeSong = async (id) => {
+    try {
+        const dbUser = await getDoc(doc(db, "users", auth.currentUser.uid));
+        console.log(dbUser.data());
+        const ref = doc(db, "playlists", dbUser.data().liked)
+        const liked = await getDoc(ref);
+        console.log(liked.data());
+        const res = await updateDoc(ref,{
+            ...liked.data(),
+            songs: [...liked.data().songs, id]
+        })
+        return res
+        
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+
 
 export const follow = async (user_id) => {
     try {
@@ -122,7 +228,6 @@ export const register = async ({email, password, username}) => {
         console.log(user)
 
         if(user){
-
             await setDoc(doc(db, "users", user.uid), {
                 username,
                 email,
@@ -134,6 +239,7 @@ export const register = async ({email, password, username}) => {
                 liked: []
             })
 
+
             await updateProfile(auth.currentUser, {
                 displayName: username
             })
@@ -144,7 +250,7 @@ export const register = async ({email, password, username}) => {
 
 
     } catch (error) {
-        toast.error(error.message)
+        console.log(error)
     }
 }
 
@@ -167,14 +273,7 @@ export const logout = async () => {
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        const dbUser = await getDoc(doc(db, "users", user.uid));
-        let data = {
-            uid: user.uid,
-            email: user.email,
-            emailVerified: user.emailVerified,
-            ...dbUser.data(),
-        }
-        userHandle(data)
+        await updateRedux()
     } else {
         userHandle(false)
     }

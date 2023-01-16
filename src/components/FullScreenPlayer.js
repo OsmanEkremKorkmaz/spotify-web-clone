@@ -11,13 +11,13 @@ function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
     const dispatch = useDispatch();
   return (
     <div className='h-full relative' onClick={controls[state?.playing ? "pause" : "play"] }>
-        <div className='absolute inset-0 object-cover bg-center bg-cover blur-md opacity-30' style={{backgroundImage: `url(${current.image})`}}></div>
+        <div className='absolute inset-0 object-cover bg-center bg-cover blur-md opacity-30' style={{backgroundImage: `url(${current.cover})`}}></div>
             <div className='absolute bottom-[11.5rem] left-14 flex items-center justify-center'>
-                <img className='w-20 h-20 object-cover' src={current.image} />
+                <img className='w-20 h-20 object-cover' src={current.cover} />
             </div>
             <div className='absolute bottom-[11.5rem] left-40 w-full right-14 font-[700]'>
                 <div className='text-3xl mb-2'>
-                    {current.title}
+                    {current.name}
                 </div>
                 <div className='text-xs opacity-70'>
                     {current.artist}
@@ -27,7 +27,7 @@ function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
                 <Icon name="logo" size={32}/>
                 <div className='align-middle ml-3'>
                     <div className='text-sm font-semibold uppercase'>Playing from playlist</div>
-                    <div className='text-xs font-bold'>{current.description}</div>
+                    <div className='text-xs font-bold'>{current.album}</div>
                 </div>
             </div>
 

@@ -4,10 +4,11 @@ import { secondsToTime } from "utils";
 import CustomRange from "components/CustomRange";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"
-import { setControls, setPlaying, setSidebar } from "redux/player/player";
+import { DecreaseQueueIndex, IncreaseQueueIndex, setControls, setCurrent, setPlaying, setSidebar } from "redux/player/player";
 
 import FullScreenPlayer from "components/FullScreenPlayer";
 import { setIsLoop } from "redux/queue/queue";
+import { getPlaylist, likeSong } from "../../firebase";
 
 export default function Player(){
 
@@ -16,13 +17,38 @@ export default function Player(){
     const [show, toggle] = useToggle(false);
     const isFullscreen = useFullscreen(fsRef, show, {onClose: () => toggle(false)});
 
-    const { current, sidebar } = useSelector(state => state.player)
+    const { current, sidebar, queue, queueIndex } = useSelector(state => state.player)
     const {isLoop} = useSelector(state => state.queue)
 
+    const {user} = useSelector(state => state.auth)
+
+    const [liked, setLiked] = useState([])
+
+    getPlaylist(user?.liked).then(res => setLiked(res.songs))
     
     const [audio, state, controls, ref] = useAudio({
         src: current?.src
     });
+
+
+
+    const likeSongHandle = async () => {
+        await likeSong(current?.id)
+    }
+
+    const nextSong = () => {
+        dispatch(IncreaseQueueIndex())
+    }
+    const prevSong = () => {
+        dispatch(DecreaseQueueIndex())    
+    }
+
+    useEffect(() => {
+        dispatch(setCurrent(queue[queueIndex]))
+    }, [queueIndex])
+
+
+
     
     if(isLoop && current && state?.time === state?.duration){
         state.time = 0
@@ -39,7 +65,7 @@ export default function Player(){
         if(current){
         dispatch(setControls(controls))
         }
-    }, [])
+    }, [current])
 
     useEffect(() => {
         if(current){
@@ -65,18 +91,18 @@ export default function Player(){
                 <div className="flex items-center">
                     <div className="flex items-center">
                         {!sidebar && <div className="h-14 w-14 flex-shrink-0 relative group">
-                            <img src={current.image} alt=""/>
+                            <img src={current.cover} alt=""/>
                             <button onClick={() => dispatch(setSidebar(true))} className="w-[1.625rem] h-[1.625rem] absolute opacity-0 hover:scale-105 group-hover:opacity-100 top-[0.313rem] right-[0.313rem] rounded-full bg-black/70 flex items-center justify-center">
                                 <Icon size={16} name={"arrowLeft"}/>
                             </button>
                         </div>}
                         <div className="mx-[0.875rem]">
-                            <h6 className="text-sm text-white font-semibold hover:underline cursor-pointer line-clamp-1">{current.title}</h6>
+                            <h6 className="text-sm text-white font-semibold hover:underline cursor-pointer line-clamp-1">{current.name}</h6>
                             <p className="text-[0.688rem] text-link hover:underline hover:text-white cursor-pointer">{current.artist}</p>
                         </div>
                     </div>
-                    <button className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
-                        <Icon size={16} name="heart"/>
+                    <button onClick={likeSongHandle} className={`w-8 h-8 cursor-default flex items-center ${liked?.includes(current?.id) ? "!text-primary" : ""} justify-center text-white/70 hover:text-white`}>
+                        <Icon size={16}  name={liked?.includes(current?.id) ? "heartFilled" : "heart"}/>
                     </button>
                     <button className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
                         <Icon size={16} name="pictureInPicture"/>
@@ -89,13 +115,13 @@ export default function Player(){
                     <button className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
                         <Icon size={16} name="shuffle"/>
                     </button>
-                    <button className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
+                    <button onClick={prevSong} className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
                         <Icon size={16} name="playerPrev"/>
                     </button>
                     <button onClick={controls[state?.playing ? "pause" : "play"] } className="w-8 h-8 cursor-default flex items-center mx-2 justify-center text-black bg-white rounded-full hover:scale-[1.06] transition-all">
                         <Icon size={16} name={state?.playing ? "pause" : "playerPlay"}/>
                     </button>
-                    <button className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
+                    <button onClick={nextSong} className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
                         <Icon size={16} name="playerNext"/>
                     </button>
                     <button onClick={() => dispatch(setIsLoop(prev => !prev))} className={`w-8 h-8 cursor-default flex items-center relative justify-center ${isLoop ? "text-secondary after:block after:bottom-0 after:bg-secondary after:absolute after:translate-x-[-50%] after:rounded-full after:h-1 after:left-[50%] after:w-1" : "text-white/70 hover:text-white"} `}>
@@ -116,6 +142,7 @@ export default function Player(){
                     />
                     <div className="text-[0.688rem] text-white text-opacity-70">
                         {secondsToTime(state?.duration)}
+                        {/* {state?.duration} */}
                     </div>
                 </div>
             </div>

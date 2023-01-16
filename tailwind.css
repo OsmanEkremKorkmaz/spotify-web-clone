@@ -40,10 +40,26 @@
         "image ."
         "disclaimer disclaimer";
     }
-    .table-grid {
-        grid-template-columns:  16px 6fr 4fr 3fr minmax(120px,1fr);
+    @media only screen and (max-width: 768px) {
+        .table-grid {
+            grid-template-columns: 16px 4fr minmax(120px,1fr);
+        }
     }
-    .userInput:focus-within .usernameLabel {
+    @media only screen and (min-width: 768px) {
+        .table-grid {
+            grid-template-columns:  16px 4fr 2fr minmax(120px,1fr);
+        }
+    }
+    @media only screen and (min-width: 1024px) {
+        .table-grid {
+            grid-template-columns:  16px 6fr 4fr 3fr minmax(120px,1fr);
+        }
+    }
+    
+    .input-provider:focus-within .input-label {
         @apply !opacity-100
+    }
+    .input {
+        @apply bg-[#ffffff1a] border w-full border-transparent focus:border-53 focus:bg-[#333] outline-none rounded h-10 px-3 placeholder:text-sm placeholder:font-semibold text-75 font-semibold placeholder:text-75
     }
 }

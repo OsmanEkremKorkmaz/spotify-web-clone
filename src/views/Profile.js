@@ -1,7 +1,6 @@
 import { Menu } from '@headlessui/react'
 import Gradient from 'components/Gradient'
 import GradientHeader from 'components/GradientHeader'
-import Title from 'components/Title'
 import { follow, getUserInfo, unfollow } from '../firebase'
 import { Icon } from 'Icons'
 import React, { useEffect, useState } from 'react'
@@ -26,14 +25,15 @@ export default function Profile() {
 
             await follow(user_id)
         }
+        getUser()
     }
 
-    const isFollowing = user ? user?.followers.includes(currentUser.uid) : false
+    const isFollowing = user?.followers && user?.followers?.hasOwnProperty(currentUser.uid)
 
     useEffect(() => {
 
         getUser()
-    },[user_id])
+    },[user_id, currentUser])
 
     console.log(user)
     const isMe = user_id === currentUser.uid
@@ -41,7 +41,7 @@ export default function Profile() {
   return user && (
     <div>
 
-        <GradientHeader isProfile={true} img={user.profilePhoto || false} upperTitle="Profil" title={user.username} subber1={`${user.followers?.length} Takipçi`} subber2={`Takip Edilenler: ${user.following?.length}`} isEditable={isMe} />
+        <GradientHeader isProfile={true} img={user.profilePhoto || false} upperTitle="Profil" title={user.username} subber1={`${user.followers ? Object.keys(user.followers).length : 0} Takipçi`} subber2={`Takip Edilenler: ${user.following ? Object.keys(user.following).length : 0}`} isEditable={isMe} />
         <Gradient img={user.profilePhoto || false}/>
         <div className='z-1 relative'>
 
@@ -51,7 +51,7 @@ export default function Profile() {
                         {isFollowing ? "Takip Ediliyor" : "Takip Et"}
                     </button>
                 }
-            <Menu as={"nav"} className="relative">
+            <Menu as={"nav"} className="relative z-20">
             {({ open }) => (
                 <>
                     <Menu.Button className="text-[#ffffff99]">
@@ -64,7 +64,10 @@ export default function Profile() {
                         )}
                         </Menu.Item> : <Menu.Item>
                         {({ active }) => (
-                            <button onClick={() => follow(user_id)} className='flex h-10 w-full shrink-0 whitespace-nowrap font-medium cursor-default rounded-sm text-[#ffffffe6] p-3 pr-2 items-center hover:bg-[#ffffff1a]'>Takip Et</button>
+                            <button onClick={ async () => {
+                                await follow(user_id)
+                                getUser()
+                            }} className='flex h-10 w-full shrink-0 whitespace-nowrap font-medium cursor-default rounded-sm text-[#ffffffe6] p-3 pr-2 items-center hover:bg-[#ffffff1a]'>Takip Et</button>
                         )}
                         </Menu.Item>}
                         <Menu.Item>
@@ -80,15 +83,15 @@ export default function Profile() {
             <div className='gap-y-10 flex flex-col'>
 
                 {
-                    (user.followers.length) ? <div className='px-8 mb-4'>
-                        <ComponenetShelf title="Takipçiler" items={user.followers} isNotUser={false} />
+                    (user.followers ? Object.keys(user.followers).length : 0) ? <div className='px-8 mb-4'>
+                        <ComponenetShelf title="Takipçiler" items={Object.keys(user.followers)} isNotUser={false} />
 
 
                     </div> : <></>
                 }
                 {
-                    (user.following.length) ? <div className='px-8 mb-4'>
-                        <ComponenetShelf title="Takip Ediliyor" items={user.following} isNotUser={false} />
+                    (user.following ? Object.keys(user.following).length : 0) ? <div className='px-8 mb-4'>
+                        <ComponenetShelf title="Takip Ediliyor" items={Object.keys(user.following)} isNotUser={false} />
 
 
                     </div> : <></>

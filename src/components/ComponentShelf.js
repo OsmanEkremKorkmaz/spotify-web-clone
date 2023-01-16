@@ -17,16 +17,13 @@ export default function ComponenetShelf({title, more = false, items, isNotUser=t
         if (windowWith >= 1536) setCols(6)
     }, [windowWith])
 
-
-    console.log(items)
-
     return(
         <section className="mb-4">
             <header className="h-[51.2px]">
                 <Title title={title} more={items.length > cols ? more : false} />
             </header>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-                {items.slice(0,cols).map(item => <SongItem isNotUser={isNotUser} key={item} item={item}/>)}
+                {items.slice(0,cols).map((item,key) => <SongItem isNotUser={isNotUser} key={key} item={item}/>)}
             </div>
         </section>
     )

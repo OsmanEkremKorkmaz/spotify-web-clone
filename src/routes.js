@@ -14,8 +14,10 @@ import Register from "views/auth/Register";
 import AuthLayout from "views/auth";
 import Login from "views/auth/Login";
 import Profile from "views/Profile";
+import PrivateRoute from "components/PrivateRoute";
+import AddSong from "views/AddSong";
 
-export const routes = [
+const routes = [
     {
         path: "/",
         element: <MainLayout />,
@@ -51,6 +53,7 @@ export const routes = [
             {
                 path: "/collection",
                 element: <CollectionLayout />,
+                auth:true,
                 children: [
                     {
                         path: "tracks",
@@ -81,6 +84,11 @@ export const routes = [
             {
                 path: "/user/:user_id",
                 element: <Profile />
+            },
+            {
+                path: "/add",
+                element:<AddSong />,
+                auth: true
             }
 
         ]
@@ -101,3 +109,15 @@ export const routes = [
     },
 
 ]
+
+const authCheck = (routes) => routes.map(route => {
+    if (route?.auth) {
+        route.element = <PrivateRoute>{route.element}</PrivateRoute>
+    }
+    if(route?.children) {
+        route.children = authCheck(route.children)
+    }
+    return route
+})
+
+export default authCheck(routes);

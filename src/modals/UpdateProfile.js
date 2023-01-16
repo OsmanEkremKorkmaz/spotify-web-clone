@@ -1,32 +1,32 @@
 import ProfilePhoto from 'components/ProfilePhoto'
-import { updateProfileData, updateProfilePhoto } from '../firebase'
+import { getUserInfo, login, updateProfileData, updateProfilePhoto, updateRedux } from '../firebase'
 import { Icon } from 'Icons'
 import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { setModal } from 'redux/modals/modals'
 import store from 'redux/store'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import Input from 'components/Input'
 
 export default function UpdateProfile() {
 
     const {user} = useSelector(state => state.auth)
 
-    const hasPP = user.profilePhoto
     const [profilePhoto, setProfilePhoto] = useState(user.profilePhoto)
     const [username, setUsername] = useState(user.username)
     const [file, setFile] = useState(false)
     const [isChanged, setIsChanged] = useState(false)
 
-
     const handleSubmit = async e => {
         console.log(isChanged,"siu",profilePhoto);
         e.preventDefault()
         if(isChanged){
-
+            console.log(123);
+            await updateProfileData({...user,username})
             await updateProfilePhoto(profilePhoto || false)
+            await updateRedux()
         }
-        await updateProfileData({
-            username,
-        })
+
     }
 
   return (
@@ -44,9 +44,9 @@ export default function UpdateProfile() {
                     type="file"
                     id="profile-photo"
                     onChange={(e) => {
+                        setIsChanged(true)
                         setProfilePhoto(e.target.files[0])                        
                         setFile(e.target.files[0])
-                        setIsChanged(true)
                     }}
                     accept="image/jpg, image/jpeg, image/png"
                 />
@@ -58,21 +58,13 @@ export default function UpdateProfile() {
                         <label htmlFor="profile-photo" className="hover:underline cursor-pointer">Fotoğraf seç</label>
                         <Icon name="edit" size={48} />
                         <button type='button' onClick={() => {
+                            setIsChanged(true)
                             setFile(false)
                             setProfilePhoto(false)
-                            setIsChanged(true)
                         }} className="hover:underline">Fotoğrafı kaldır</button>
                     </div>
                 </div>
-                <div style={{gridArea:"name"}} className="relative userInput">
-                    <label className='absolute transition-opacity duration-200 usernameLabel opacity-0 -top-2.5 text-link left-2.5 text-xs font-semibold'>Adı</label>
-                    <input 
-                        placeholder='Gösterilecek adı seç' 
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        className="bg-[#ffffff1a] border w-full border-transparent updateUsername focus:border-53 focus:bg-[#333] outline-none rounded h-10 px-3 placeholder:text-sm placeholder:font-semibold text-75 font-semibold placeholder:text-75" 
-                    />
-                </div>
+                <Input style={{gridArea:"name"}} value={username} setValue={setUsername} setIsChanged={setIsChanged} placeholder="Gösterilecek adı seç" label="Adı" />
                 <button
                     style={{gridArea:"save-button"}}
                     className="ml-auto flex bg-white text-black rounded-full font-semibold hover:scale-105 items-center justify-center text-center h-12 px-8 py-2" type='submit'

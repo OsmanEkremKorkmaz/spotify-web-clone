@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Icon } from 'Icons'
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setCurrent } from 'redux/player/player';
+import { setCurrent, setPlaying, setQueue } from 'redux/player/player';
 import { getUserInfo } from '../firebase';
 import ProfilePhoto from './ProfilePhoto';
 
@@ -13,8 +13,6 @@ function SongItem({item, isNotUser=true}) {
 
         if(!isNotUser){
             getUserInfo(item).then(user => {
-
-                console.log(user)
                 setContent({
                     id:user.uid,
                     type:"artist",
@@ -24,8 +22,7 @@ function SongItem({item, isNotUser=true}) {
                 })
             })
         }
-    },[])
-    console.log("content",content);
+    },[]) 
     const dispatch = useDispatch();
     const {current, playing, controls} = useSelector((state) => state.player);
     const imageStyle = item => {
@@ -38,22 +35,14 @@ function SongItem({item, isNotUser=true}) {
         }
     }
 
-    console.log("current",current);
-
     const updateCurrent = e => {
         e.preventDefault()
-        console.log(1);
-        if (current?.id === item.id){
-            console.log("mesi");
-            if(playing){
-                controls.pause()
-            } else {
-                controls.play()
-            }
-        } else {
-            console.log("siu");
-            dispatch(setCurrent(item))
-        }
+        console.log(current);
+        console.log(current?.id,item.id);
+
+        dispatch(setQueue([item]))    
+        dispatch(setCurrent(item))
+        playing ? controls.pause() : controls.play()
     }
 
     const isCurrentItem = (current?.id === item.id && playing)
@@ -66,7 +55,7 @@ function SongItem({item, isNotUser=true}) {
                 { 
                 (!content.image && !isNotUser )
                 ? <ProfilePhoto size={150} noUser={true} classnames="max-w-[150px] max-h-[150px] !mr-0 min-w-[150px] min-h-[150px]"/>
-                : <img alt={content.title} src={content.image} className={`absolute inset-0 object-cover w-full h-full ${imageStyle(content)}`}/>
+                : <img alt={content.title || content.name} src={content.image || content.cover} className={`absolute inset-0 object-cover w-full h-full ${imageStyle(content)}`}/>
                 }
                 {content.type !== "podcast" && isNotUser && <button type='button'
                     onClick={updateCurrent}
@@ -76,10 +65,10 @@ function SongItem({item, isNotUser=true}) {
             </div>
             <div className="min-h-[64px]">
                 <div className="overflow-hidden overflow-ellipsis whitespace-nowrap pb-1 text-base font-bold leading-6">
-                    {content.title}
+                    {content.title || content.name}
                 </div>
                 <p className="line-clamp-2 text-sm leading-4 font-semibold text-subdued">
-                    {content.description}
+                    {content.description || content.artist}
                 </p>
             </div>
         </a>
