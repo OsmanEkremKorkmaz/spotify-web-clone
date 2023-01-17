@@ -24,7 +24,13 @@ export default function Player(){
 
     const [liked, setLiked] = useState([])
 
-    getPlaylist(user?.liked).then(res => setLiked(res.songs))
+    useEffect(() => {
+
+        if(user?.liked){
+
+            getPlaylist(user?.liked).then(res => setLiked(res.songs))
+        }
+    },[user?.liked])
     
     const [audio, state, controls, ref] = useAudio({
         src: current?.src

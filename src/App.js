@@ -16,7 +16,6 @@ function App() {
   }
 
   return <>
-  <Toaster position="top-right" />
   {modal && <Modal name={modal} />}
   
     {showRoutes}

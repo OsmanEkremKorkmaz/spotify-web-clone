@@ -1,6 +1,5 @@
 import Input from 'components/Input'
 import { addSong } from '../firebase'
-import { set } from 'firebase/database'
 import { Icon } from 'Icons'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
@@ -75,14 +74,14 @@ export default function AddSong() {
                     <Input label="Sanatçı Adı" placeholder="Sanatçı adını gir" setIsChanged={setIsChanged} value={artist} setValue={setArtist} />
                     <label htmlFor='src' className='bg-[#ffffff1a] mr-auto flex items-center gap-x-2 px-6 py-2 rounded-lg text-link hover:scale-105 cursor-pointer'>
                         <Icon name="cloudUpload" size={36}/>
-                        {src ? <span>{src.name}</span> : <></>}
+                        {src ? <span>{src?.name}</span> : <></>}
                     </label>
                 </div>
         </div>
         <button
-                    className="ml-auto flex bg-white text-black rounded-full font-semibold hover:scale-105 items-center justify-center text-center h-12 px-8 py-2" type='submit'
-                    >
-                        Kaydet
+            className="ml-auto flex bg-white text-black rounded-full font-semibold hover:scale-105 items-center justify-center text-center h-12 px-8 py-2" type='submit'
+            >
+                Kaydet
         </button>
     </form>
   )

@@ -92,6 +92,7 @@ export const getUserInfo = async (id) => {
 
 export const getPlaylist = async (id) => {
     try {
+        console.log(id);
         const docRef = doc(db, "playlists", id)
         const playlist = await getDoc(docRef);
         return playlist.data()
