@@ -62,4 +62,22 @@
     .input {
         @apply bg-[#ffffff1a] border w-full border-transparent focus:border-53 focus:bg-[#333] outline-none rounded h-10 px-3 placeholder:text-sm placeholder:font-semibold text-75 font-semibold placeholder:text-75
     }
+    .bottom-navbar {
+        background: linear-gradient(0deg,#000 40%,rgba(0,0,0,.1));
+    }
+    .responsive-player-bg {
+        background: rgba(0,0,0,.48);
+        border-radius: 6px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        content: "";
+        z-index: -1;
+    }
+    .full-screen-gradient {
+        background-color: #000;background-image: -webkit-linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.6) 80%);
+        background-image: linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.6) 80%);
+    }
 }

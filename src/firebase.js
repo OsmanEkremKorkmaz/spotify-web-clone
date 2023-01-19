@@ -1,11 +1,12 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, updateCurrentUser } from "firebase/auth";
-import { addDoc, collection, doc, getDoc, getDocs, getFirestore, setDoc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, getFirestore, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref as storageRef, uploadBytes, uploadBytesResumable } from "firebase/storage";
 import { child, get, getDatabase, ref, remove, set, update } from "firebase/database";
 import toast from "react-hot-toast";
 import store from "./redux/store";
 import { userHandle } from "utils";
+
 
 
 // Your web app's Firebase configuration
@@ -92,7 +93,6 @@ export const getUserInfo = async (id) => {
 
 export const getPlaylist = async (id) => {
     try {
-        console.log(id);
         const docRef = doc(db, "playlists", id)
         const playlist = await getDoc(docRef);
         return playlist.data()
@@ -100,6 +100,18 @@ export const getPlaylist = async (id) => {
         console.log(e)
     }
 }
+export const createPlaylist = async (data) => {
+    try {
+        const docRef = doc(db, "playlists", data.userId)
+        await setDoc(docRef, data);
+    } catch(e) {
+        console.log(e)
+    }
+}
+
+
+
+
 export const getAllSongs = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, "songs"));
@@ -120,6 +132,7 @@ export const getSongById = async (id) => {
 
 export const addSong = async (data) => {
     try {
+        console.log(collection(db, "songs"))
         const docRef = await addDoc(collection(db, "songs"), {
             name:data.name,
             album:data.album,
@@ -128,7 +141,6 @@ export const addSong = async (data) => {
             src:"",
             duration:0
         });
-        console.log(docRef.id);
         const cover_ref = storageRef(storage, "covers/" + docRef.id)
         const coverMetadata = {
             contentType: 'image/jpeg',
@@ -144,12 +156,11 @@ export const addSong = async (data) => {
         };
         const srcUploadTask = await uploadBytes(song_ref, data.src, songMetadata);
         const src = await getDownloadURL(song_ref)
-        let duration = 0
+        
         const res = await updateDoc(docRef,{
             cover:imgUrl,
             src,
-            duration,
-            id:docRef.id
+            id:docRef.id,
         })
 
         return res
@@ -161,15 +172,24 @@ export const addSong = async (data) => {
 export const likeSong = async (id) => {
     try {
         const dbUser = await getDoc(doc(db, "users", auth.currentUser.uid));
-        console.log(dbUser.data());
         const ref = doc(db, "playlists", dbUser.data().liked)
         const liked = await getDoc(ref);
         console.log(liked.data());
-        const res = await updateDoc(ref,{
-            ...liked.data(),
-            songs: [...liked.data().songs, id]
-        })
-        return res
+        const isExists = liked.data().songs.includes(id)
+        if (isExists){
+            const res = await updateDoc(ref,{
+                songs: liked.data().songs.filter(song => song !== id)
+            })
+        } else {
+
+            console.log(liked.data());
+            const res = await updateDoc(ref,{
+                ...liked.data(),
+                songs: [...liked.data().songs, id]
+            })
+            return res
+        }
+        return false
         
     } catch (e) {
         console.log(e);
@@ -228,8 +248,9 @@ export const register = async ({email, password, username}) => {
         const {user} = await createUserWithEmailAndPassword(auth, email, password)
         console.log(user)
 
+        
         if(user){
-            await setDoc(doc(db, "users", user.uid), {
+            const data = {
                 username,
                 email,
                 password,
@@ -237,8 +258,16 @@ export const register = async ({email, password, username}) => {
                 following: [],
                 playlists: [],
                 profilePhoto: false,
-                liked: []
-            })
+                liked: user.uid
+            }
+            await setDoc(doc(db, "users", user.uid), data)
+            const likedSongData = {
+                cover: "https://firebasestorage.googleapis.com/v0/b/spotify-web-clone-229ad.appspot.com/o/defaults%2FlikedSongs.png?alt=media&token=6326b213-8954-40fd-8e6a-b8e6314e4ea1",
+                name: "Beğenilen Şarkılar",
+                songs: [],
+                userId: user.uid
+            }
+            await createPlaylist(likedSongData)         
 
 
             await updateProfile(auth.currentUser, {

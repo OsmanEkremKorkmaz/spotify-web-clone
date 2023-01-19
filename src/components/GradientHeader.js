@@ -4,24 +4,14 @@ import { FastAverageColor } from 'fast-average-color';
 import store from 'redux/store';
 import { setModal } from 'redux/modals/modals';
 import { Link } from 'react-router-dom';
+import { getColor } from 'utils';
 
 
 export default function GradientHeader({faxColor, img, upperTitle, title, subImg, subber1, subber1Link="", subber2, isProfile=false, isEditable=false}) {
     const [color, setColor] = useState(faxColor || "#535353")
-    const fac = new FastAverageColor();
-    const getColor = (img) => {
-      if(!img){
-        setColor(faxColor || "#535353")
-        return null
-      }
-        fac.getColorAsync(img,{
-          ignoredColor: [255, 255, 255, 255, 100] // white
-      })
-          .then(color => setColor(color.hex))
-          .catch(e => console.log(e))
-      }
+    
     useEffect(() => {
-      getColor(img)
+      getColor(img, setColor)
     }, [img])
   return (
     <div className={`h-[30vh] max-h-[500px] w-full min-h-[340px] flex pb-6 -mt-16 px-8 `}>

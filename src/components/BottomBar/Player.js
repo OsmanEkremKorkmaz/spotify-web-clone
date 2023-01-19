@@ -1,14 +1,16 @@
 import { Icon } from "Icons"
 import {useAudio, useFullscreen, useToggle} from 'react-use';
-import { secondsToTime } from "utils";
+import { getColor, secondsToTime } from "utils";
 import CustomRange from "components/CustomRange";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"
-import { DecreaseQueueIndex, IncreaseQueueIndex, setControls, setCurrent, setPlaying, setSidebar } from "redux/player/player";
+import { DecreaseQueueIndex, IncreaseQueueIndex, resetShuffle, setControls, setCurrent, setIsCurrentLoop, setIsShuffle, setPlaying, setQueue, setSidebar } from "redux/player/player";
 
 import FullScreenPlayer from "components/FullScreenPlayer";
-import { setIsLoop } from "redux/queue/queue";
+import { setIsLoop } from "redux/player/player";
 import { getPlaylist, likeSong } from "../../firebase";
+import { useWindowWidth } from "@react-hook/window-size";
+import { FastAverageColor } from "fast-average-color";
 
 export default function Player(){
 
@@ -17,12 +19,30 @@ export default function Player(){
     const [show, toggle] = useToggle(false);
     const isFullscreen = useFullscreen(fsRef, show, {onClose: () => toggle(false)});
 
-    const { current, sidebar, queue, queueIndex } = useSelector(state => state.player)
-    const {isLoop} = useSelector(state => state.queue)
+    const { current, sidebar, queue, queueIndex, isShuffle, isCurrentLoop, isLoop } = useSelector(state => state.player)
 
     const {user} = useSelector(state => state.auth)
 
     const [liked, setLiked] = useState([])
+
+    const shuffle = () => {
+        if(!isShuffle){
+            const newArray = [...queue]
+            const length = newArray.length
+            
+            for (let start = 0; start < length; start++) {
+                const randomPosition = Math.floor((newArray.length - start) * Math.random())
+                const randomItem = newArray.splice(randomPosition, 1)
+                
+                newArray.push(...randomItem)
+            }
+            console.log(newArray);
+            dispatch(setQueue(newArray))
+        } else {
+            dispatch(resetShuffle())
+        }
+        dispatch(setIsShuffle(!isShuffle))
+    }
 
     useEffect(() => {
 
@@ -30,7 +50,7 @@ export default function Player(){
 
             getPlaylist(user?.liked).then(res => setLiked(res.songs))
         }
-    },[user?.liked])
+    },[user])
     
     const [audio, state, controls, ref] = useAudio({
         src: current?.src
@@ -40,6 +60,10 @@ export default function Player(){
 
     const likeSongHandle = async () => {
         await likeSong(current?.id)
+        if(user?.liked){
+
+            getPlaylist(user?.liked).then(res => setLiked(res.songs))
+        }
     }
 
     const nextSong = () => {
@@ -53,23 +77,42 @@ export default function Player(){
         dispatch(setCurrent(queue[queueIndex]))
     }, [queueIndex])
 
+    const handleLoop = () => {
+        if(isCurrentLoop){
+            dispatch(setIsCurrentLoop(false))
+        } else if (isLoop) {
+            dispatch(setIsLoop(false))
+            dispatch(setIsCurrentLoop(true))
+        } else {
+            dispatch(setIsLoop(true))
+        }
+        
+    }
+
 
 
     
-    if(isLoop && current && state?.time === state?.duration){
+    if(current && (state?.time === state?.duration) && state?.duration > 0 && state?.time > 0 ){
+
         state.time = 0
-        controls.play()
+        if(isCurrentLoop){
+
+            controls.play()
+        } else {
+            nextSong()
+        }
     }
     useEffect(() => {
         if(current){
-
-            controls.play()
+            console.log(current);
         }
+        
     }, [current])
-
+    
     useEffect(() => {
         if(current){
-        dispatch(setControls(controls))
+            dispatch(setControls(controls))
+            controls.play()
         }
     }, [current])
 
@@ -90,7 +133,20 @@ export default function Player(){
         return 'volumeFull'
     }, [state.volume, state.muted])
 
-    return (
+    const windowWith = useWindowWidth()
+
+    const [color, setColor] = useState("#535353")
+
+    const progressBar = `${(state?.time / state?.duration) * 100}%`
+
+    useEffect(() => {
+      getColor(current?.cover, setColor)
+    }, [current])
+
+    return <div>
+        {audio}
+        {windowWith >= 768 ? (
+        <div className="h-22.5 bg-footer border-t border-active">
         <div className="flex justify-between items-center h-full px-4">
             <div className="min-w-[11.25rem] w-[30%] flex items-center">
                 { current && (
@@ -118,7 +174,7 @@ export default function Player(){
             </div>
             <div className="flex max-w-[45.125rem] w-[40%] flex-col px-4 items-center">
                 <div className="flex items-center gap-x-2">
-                    <button className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
+                    <button onClick={shuffle} className={`w-8 h-8 cursor-default relative flex items-center justify-center ${isShuffle ? "text-secondary after:block after:bottom-0 after:bg-secondary after:absolute after:translate-x-[-50%] after:rounded-full after:h-1 after:left-[50%] after:w-1" : "text-white/70 hover:text-white"}`}>
                         <Icon size={16} name="shuffle"/>
                     </button>
                     <button onClick={prevSong} className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
@@ -130,12 +186,11 @@ export default function Player(){
                     <button onClick={nextSong} className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
                         <Icon size={16} name="playerNext"/>
                     </button>
-                    <button onClick={() => dispatch(setIsLoop(prev => !prev))} className={`w-8 h-8 cursor-default flex items-center relative justify-center ${isLoop ? "text-secondary after:block after:bottom-0 after:bg-secondary after:absolute after:translate-x-[-50%] after:rounded-full after:h-1 after:left-[50%] after:w-1" : "text-white/70 hover:text-white"} `}>
+                    <button onClick={handleLoop} className={`w-8 h-8 cursor-default flex items-center relative justify-center ${isCurrentLoop ? "text-secondary after:block after:bottom-0 after:bg-secondary after:absolute after:translate-x-[-50%] after:rounded-full after:h-1 after:left-[50%] after:w-1" : isLoop ? "text-secondary" : "text-white/70 hover:text-white"} `}>
                         <Icon size={16} name="loop"/>
                     </button>
                 </div>
                 <div className="w-full flex items-center gap-x-2">
-                    {audio}
                     <div className="text-[0.688rem] text-white text-opacity-70">
                         {secondsToTime(state?.time)}
                     </div>
@@ -178,13 +233,40 @@ export default function Player(){
                         />
                 </div>
                 <button
-                    onClick={toggle}
+                    onClick={current ? toggle : () => false}
                     className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
                     <Icon size={16} name="fullScreen"/>
                 </button>
             </div>
-            <div ref={fsRef}>
-                {isFullscreen && (
+            
+        </div>
+        </div>
+    ) : (
+        current ? (
+            <div onClick={toggle} style={{backgroundColor: color}} className='rounded-md flex items-center relative z-[1] after:responsive-player-bg gap-x-2 p-2 mx-2 h-14'>
+                
+                <img src={current.cover} className="rounded h-10 w-10 mr-1" />
+                <div className="flex flex-col w-full text-left justify-evenly">
+                    <div className="font-bold text-sm">{current.name}</div>
+                    <div className="font-normal text-[#ffffffb3] text-[0.8125rem]">{current.artist}</div>
+
+                </div>
+                <div onClick={e => e.stopPropagation()} className="flex gap-x-2 items-center">
+                    <button onClick={likeSongHandle} className={`cursor-default flex items-center ${liked?.includes(current?.id) ? "!text-primary" : ""} justify-center text-white/70 hover:text-white`}>
+                            <Icon size={24}  name={liked?.includes(current?.id) ? "heartFilled" : "heart"}/>
+                        </button>
+                    <button onClick={controls[state?.playing ? "pause" : "play"] } className=" cursor-default flex items-center px-2 justify-center white hover:scale-[1.06] transition-all">
+                        <Icon size={24} name={state?.playing ? "pause" : "playerPlay"}/>
+                    </button>
+                </div>
+                <div className="h-0.5 w-[calc(100%-1rem)] absolute mx-auto left-0 right-0 -bottom-0 rounded-sm bg-[#ffffff4d]">
+                    <div style={{width:progressBar}} className="h-0.5 bg-white rounded-sm "></div>
+                </div>
+            </div>
+          ) : null
+    )}
+    <div ref={fsRef}>
+                {isFullscreen && current && (
                 <FullScreenPlayer 
                     toggle={toggle}
                     state={state}
@@ -193,6 +275,5 @@ export default function Player(){
                 />
             )}
             </div>
-        </div>
-    )
+     </div>
 }

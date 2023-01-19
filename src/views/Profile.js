@@ -28,7 +28,7 @@ export default function Profile() {
         getUser()
     }
 
-    const isFollowing = user?.followers && user?.followers?.hasOwnProperty(currentUser.uid)
+    const isFollowing = user?.followers && user?.followers?.includes(currentUser.uid)
 
     useEffect(() => {
 
@@ -84,14 +84,14 @@ export default function Profile() {
 
                 {
                     (user.followers ? Object.keys(user.followers).length : 0) ? <div className='px-8 mb-4'>
-                        <ComponenetShelf title="Takipçiler" items={Object.keys(user.followers)} isNotUser={false} />
+                        <ComponenetShelf title="Takipçiler" items={user?.followers} isNotUser={false} />
 
 
                     </div> : <></>
                 }
                 {
                     (user.following ? Object.keys(user.following).length : 0) ? <div className='px-8 mb-4'>
-                        <ComponenetShelf title="Takip Ediliyor" items={Object.keys(user.following)} isNotUser={false} />
+                        <ComponenetShelf title="Takip Ediliyor" items={user?.following} isNotUser={false} />
 
 
                     </div> : <></>

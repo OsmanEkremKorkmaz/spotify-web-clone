@@ -1,7 +1,7 @@
 import Input from 'components/Input'
 import { addSong } from '../firebase'
 import { Icon } from 'Icons'
-import React, { useEffect, useState } from 'react'
+import {useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 export default function AddSong() {
@@ -12,10 +12,13 @@ export default function AddSong() {
     const [album, setAlbum] = useState("")
     const [artist, setArtist] = useState("")
     const [src, setSrc] = useState(false)
+    const [duration, setDuration] = useState(0)
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         if(album.length && name.length && artist.length && src && img){
+            
             await addSong({
                 name,
                 album,
@@ -23,17 +26,10 @@ export default function AddSong() {
                 src,
                 img
             })
-
-            setAlbum("")
-            setName("")
-            setArtist("")
-            setImg(false)
-            setSrc(false)
         } else {
             toast.error("Tüm alanları Doldurun")
         }
     }
-    useEffect(() => {console.log(img,src)},[img,src])
 
   return (
     <form onSubmit={handleSubmit} className='flex flex-col mx-auto pt-4 w-full lg:max-w-[768px] px-6 gap-y-4'>
@@ -42,7 +38,6 @@ export default function AddSong() {
                         type="file"
                         id="cover"
                         onChange={(e) => {
-                            setIsChanged(true)
                             setImg(e.target.files[0])   
                         }}
                         accept="image/jpg, image/jpeg, image/png"
@@ -52,8 +47,8 @@ export default function AddSong() {
                         type="file"
                         id="src"
                         onChange={(e) => {
-                            setIsChanged(true)
                             setSrc(e.target.files[0])
+                            console.log(e.target.files[0]);
                         }}
                         accept="audio/mp3"
                     />

@@ -1,11 +1,20 @@
+import { useWindowWidth } from "@react-hook/window-size";
+import { useSelector } from "react-redux";
+import BottomNavbar from "./BottomBar/BottomNavbar";
 import Player from "./BottomBar/Player";
 
 function BottomBar(){
-    return (
-        <div className="h-22.5 bg-footer border-t border-active">
-            <Player />
-        </div>
-    )
+    const windowWith = useWindowWidth()
+    return <div className="fixed bottom-0 w-full bottom-navbar ">
+        <Player />
+        {
+            windowWith >= 768 ? (
+                null
+            ) : <div className="flex flex-col ">
+                <BottomNavbar />
+            </div> 
+        }
+    </div> 
 }
 
 export default BottomBar;

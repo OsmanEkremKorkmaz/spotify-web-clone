@@ -29,7 +29,10 @@ export default function Playlist() {
         dispatch(setQueue(songs)) 
         dispatch(setCurrent(item))
       }
-      playing ? controls.pause() : controls.play()
+      if(current){
+
+        playing ? controls.pause() : controls.play()
+      }
     }
 
     const setPlaylistAsync = async () => {
@@ -70,7 +73,7 @@ export default function Playlist() {
         <GradientHeader faxColor="#5038a0" img={playlist?.cover} upperTitle="Çalma Listesi" title={playlist?.name} subber1={user.username} subber1Link={`/user/${user.uid}`} subber2={`${songs?.length} Şarkı`} subImg={user.profilePhoto} isProfile={false} />
         <Gradient faxColor="#5038a0" img={playlist?.cover || false} />
         <div className='py-6 px-8 flex flex-start z-0 relative items-center'>
-          <button onClick={() => updateCurrent(songs[0])} className="w-14 h-14 mr-8 cursor-default flex items-center justify-center text-black bg-primary rounded-full hover:scale-[1.06] transition-all">
+          <button onClick={() => updateCurrent(!current || current === undefined ? songs[0] : current)} className="w-14 h-14 mr-8 cursor-default flex items-center justify-center text-black bg-primary rounded-full hover:scale-[1.06] transition-all">
             <Icon size={24} name={playing ? "pause" : "playerPlay"}/>
           </button>
           {
@@ -91,7 +94,7 @@ export default function Playlist() {
             {
               
               songs?.map((song, i) => <div onClick={() => setSelected(prev => !prev ? song.id : false)} onMouseLeave={() => setHovered(false)} onMouseEnter={() => setHovered(song.id)} key={i} className={`table-grid ${song.id === selected ? "!bg-[#ffffff4d]" : ""} grid group border hover:bg-[#ffffff1a] #ffffff1a items-center border-transparent rounded h-14 relative gap-4 px-4`}>
-                <div className='flex justify-center items-center z-10 font-semibold h-4 w-4 text-link min-w-4 min-h-4 right-[1px]'>{hovered === song.id || selected === song.id ? <span onClick={() => {updateCurrent(song)}}><Icon size={16} name={playing ? "pause" : "play"} /></span> : playing && song.id === current.id ? <img src="https://firebasestorage.googleapis.com/v0/b/spotify-web-clone-229ad.appspot.com/o/defaults%2Fequaliser-green.gif?alt=media&token=6eb361d2-3cc9-4c28-a987-32c133662325" /> : <span className={`font-semibold ${playing && song.id === current.id ? "text-primary" : ""}`}>{i+1}</span>}</div>
+                <div className='flex justify-center items-center  font-semibold h-4 w-4 text-link min-w-4 min-h-4 right-[1px]'>{hovered === song.id || selected === song.id ? <span onClick={() => {updateCurrent(song)}}><Icon size={16} name={playing ? "pause" : "play"} /></span> : playing && song.id === current.id ? <img src="https://firebasestorage.googleapis.com/v0/b/spotify-web-clone-229ad.appspot.com/o/defaults%2Fequaliser-green.gif?alt=media&token=6eb361d2-3cc9-4c28-a987-32c133662325" /> : <span className={`font-semibold ${playing && song.id === current.id ? "text-primary" : ""}`}>{i+1}</span>}</div>
                 <div className='flex items-center justify-self-start'>
                   <img className='mr-4 bg-active flex-shrink-0 select-none w-10 h-10' src={song.cover}/>
                   <div className='pr-2 flex flex-col'>

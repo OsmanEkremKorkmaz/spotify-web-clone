@@ -13,4 +13,7 @@ export default configureStore({
       auth: authSlice,
       modals: modalsSlice
   },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware({
+    serializableCheck: false,
+  }),
 })

@@ -12,7 +12,9 @@ function SongItem({item, isNotUser=true}) {
     useEffect(() => {
 
         if(!isNotUser){
+            console.log(item);
             getUserInfo(item).then(user => {
+                console.log(user);
                 setContent({
                     id:user.uid,
                     type:"artist",
@@ -54,7 +56,7 @@ function SongItem({item, isNotUser=true}) {
                 
                 { 
                 (!content.image && !isNotUser )
-                ? <ProfilePhoto size={150} noUser={true} classnames="max-w-[150px] max-h-[150px] !mr-0 min-w-[150px] min-h-[150px]"/>
+                ? <ProfilePhoto size={150} noUser={true} classnames="!mr-0 min-w-[150px] after:pb-[100%]"/>
                 : <img alt={content.title || content.name} src={content.image || content.cover} className={`absolute inset-0 object-cover w-full h-full ${imageStyle(content)}`}/>
                 }
                 {content.type !== "podcast" && isNotUser && <button type='button'
