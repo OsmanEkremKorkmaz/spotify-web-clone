@@ -1,8 +1,8 @@
 import { Icon } from "Icons"
-import {useAudio, useFullscreen, useToggle} from 'react-use';
+import {useAudio} from 'react-use';
 import { getColor, secondsToTime } from "utils";
 import CustomRange from "components/CustomRange";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux"
 import { DecreaseQueueIndex, IncreaseQueueIndex, resetShuffle, setControls, setCurrent, setIsCurrentLoop, setIsShuffle, setPlaying, setQueue, setSidebar } from "redux/player/player";
 
@@ -10,18 +10,21 @@ import FullScreenPlayer from "components/FullScreenPlayer";
 import { setIsLoop } from "redux/player/player";
 import { getPlaylist, likeSong } from "../../firebase";
 import { useWindowWidth } from "@react-hook/window-size";
-import { FastAverageColor } from "fast-average-color";
+import { toggle as showToggle } from "redux/show/show";
 
 export default function Player(){
 
     const dispatch = useDispatch();
-    const fsRef = useRef();
-    const [show, toggle] = useToggle(false);
-    const isFullscreen = useFullscreen(fsRef, show, {onClose: () => toggle(false)});
+    
 
     const { current, sidebar, queue, queueIndex, isShuffle, isCurrentLoop, isLoop } = useSelector(state => state.player)
 
     const {user} = useSelector(state => state.auth)
+    const { show } = useSelector(state => state.show)
+
+    const toggle = () => {
+        dispatch(showToggle())
+    }
 
     const [liked, setLiked] = useState([])
 
@@ -52,7 +55,7 @@ export default function Player(){
         }
     },[user])
     
-    const [audio, state, controls, ref] = useAudio({
+    const [audio, state, controls] = useAudio({
         src: current?.src
     });
 
@@ -75,7 +78,7 @@ export default function Player(){
 
     useEffect(() => {
         dispatch(setCurrent(queue[queueIndex]))
-    }, [queueIndex])
+    }, [queueIndex,dispatch,queue])
 
     const handleLoop = () => {
         if(isCurrentLoop){
@@ -102,26 +105,20 @@ export default function Player(){
             nextSong()
         }
     }
-    useEffect(() => {
-        if(current){
-            console.log(current);
-        }
-        
-    }, [current])
     
     useEffect(() => {
         if(current){
             dispatch(setControls(controls))
             controls.play()
         }
-    }, [current])
+    }, [current,dispatch])
 
     useEffect(() => {
         if(current){
 
             dispatch(setPlaying(state.playing))
         }
-    }, [state.playing])
+    }, [state.playing,current,dispatch])
 
     const volumeIcon = useMemo(() => {
         if(state.volume === 0 || state.muted)
@@ -232,48 +229,51 @@ export default function Player(){
                             }}
                         />
                 </div>
-                <button
-                    onClick={current ? toggle : () => false}
-                    className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
-                    <Icon size={16} name="fullScreen"/>
-                </button>
             </div>
             
         </div>
         </div>
     ) : (
         current ? (
-            <div onClick={toggle} style={{backgroundColor: color}} className='rounded-md flex items-center relative z-[1] after:responsive-player-bg gap-x-2 p-2 mx-2 h-14'>
-                
-                <img src={current.cover} className="rounded h-10 w-10 mr-1" />
-                <div className="flex flex-col w-full text-left justify-evenly">
-                    <div className="font-bold text-sm">{current.name}</div>
-                    <div className="font-normal text-[#ffffffb3] text-[0.8125rem]">{current.artist}</div>
+            <>
+            {
+            <div onClick={toggle} style={{backgroundColor: color}} className={`rounded-md ${show ? "hidden" : "flex"} items-center relative z-[1] after:responsive-player-bg gap-x-2 p-2 mx-2 h-14`}>
+                    
+                    <img alt={current.name} src={current.cover} className="rounded h-10 w-10 mr-1" />
+                    <div className="flex flex-col w-full text-left justify-evenly">
+                        <div className="font-bold text-sm">{current.name}</div>
+                        <div className="font-normal text-[#ffffffb3] text-[0.8125rem]">{current.artist}</div>
 
-                </div>
-                <div onClick={e => e.stopPropagation()} className="flex gap-x-2 items-center">
-                    <button onClick={likeSongHandle} className={`cursor-default flex items-center ${liked?.includes(current?.id) ? "!text-primary" : ""} justify-center text-white/70 hover:text-white`}>
-                            <Icon size={24}  name={liked?.includes(current?.id) ? "heartFilled" : "heart"}/>
+                    </div>
+                    <div onClick={e => e.stopPropagation()} className="flex gap-x-2 items-center">
+                        <button onClick={likeSongHandle} className={`cursor-default flex items-center ${liked?.includes(current?.id) ? "!text-primary" : ""} justify-center text-white/70 hover:text-white`}>
+                                <Icon size={24}  name={liked?.includes(current?.id) ? "heartFilled" : "heart"}/>
+                            </button>
+                        <button onClick={controls[state?.playing ? "pause" : "play"] } className=" cursor-default flex items-center px-2 justify-center white hover:scale-[1.06] transition-all">
+                            <Icon size={24} name={state?.playing ? "pause" : "playerPlay"}/>
                         </button>
-                    <button onClick={controls[state?.playing ? "pause" : "play"] } className=" cursor-default flex items-center px-2 justify-center white hover:scale-[1.06] transition-all">
-                        <Icon size={24} name={state?.playing ? "pause" : "playerPlay"}/>
-                    </button>
+                    </div>
+                    <div className="h-0.5 w-[calc(100%-1rem)] absolute mx-auto left-0 right-0 -bottom-0 rounded-sm bg-[#ffffff4d]">
+                        <div style={{width:progressBar}} className="h-0.5 bg-white rounded-sm "></div>
+                    </div>
                 </div>
-                <div className="h-0.5 w-[calc(100%-1rem)] absolute mx-auto left-0 right-0 -bottom-0 rounded-sm bg-[#ffffff4d]">
-                    <div style={{width:progressBar}} className="h-0.5 bg-white rounded-sm "></div>
-                </div>
-            </div>
+            }
+            <div className={`fixed ${show ? "bottom-0" : "-bottom-[100vh]"} transition-all left-0 w-full h-full`}>
+            {show && current && (
+            <FullScreenPlayer 
+                toggle={toggle}
+                state={state}
+                controls={controls}
+                volumeIcon={volumeIcon}
+                liked={liked}
+                likeSongHandle={likeSongHandle}
+            />
+        )}
+        </div>
+        </>
           ) : null
     )}
-    <div ref={fsRef}>
-                {isFullscreen && current && (
-                <FullScreenPlayer 
-                    toggle={toggle}
-                    state={state}
-                    controls={controls}
-                    volumeIcon={volumeIcon}
-                />
-            )}
+    
+    
             </div>
-     </div>
 }

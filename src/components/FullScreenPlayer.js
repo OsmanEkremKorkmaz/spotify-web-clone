@@ -6,7 +6,7 @@ import CustomRange from "components/CustomRange";
 import { useWindowWidth } from '@react-hook/window-size';
 import { DecreaseQueueIndex, IncreaseQueueIndex, resetShuffle, setIsCurrentLoop, setIsLoop, setIsShuffle, setQueue } from 'redux/player/player';
 
-function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
+function FullScreenPlayer({toggle, state, controls, volumeIcon, liked, likeSongHandle}) {
     const dispatch = useDispatch();
     const windowWith = useWindowWidth()
 
@@ -58,19 +58,9 @@ function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
     }
 
   return (
-    <div className='h-full flex flex-col relative' onClick={windowWith >= 768 ? controls[state?.playing ? "pause" : "play"] : () => false }>
-        { 
-            windowWith >= 768 
-            ? <div className='absolute inset-0 object-cover -z-10 bg-center bg-cover blur-md opacity-30' style={{backgroundImage: `url(${current.cover})`}}></div> 
-            : <div style={{backgroundColor: color }} className='absolute full-screen-gradient inset-0 -z-10'></div> 
-        }
-            { windowWith >= 768 ? <div className='px-3 md:px-14 mt-9 mb-14 text-white text-opacity-60 flex items-center'>
-                <Icon name="logo" size={32}/>
-                <div className='align-middle ml-3'>
-                    <div className='text-sm font-semibold uppercase'>Playing from playlist</div>
-                    <div className='text-xs font-bold'>{current.album}</div>
-                </div>
-            </div> : <div className='px-3 pt-3 mb-10 w-full h-15 flex items-center'>
+    <div className='h-full z-50 flex p-3 flex-col relative'>
+        <div style={{backgroundColor: color }} className='absolute full-screen-gradient inset-0 -z-10'></div>
+           <div className=' mb-10 w-full h-15 flex items-center'>
                 <button
                     onClick={current ? toggle : () => false}
                     className="w-12 h-12 shrink-0 cursor-default rotate-180 flex items-center justify-center text-white/70 hover:text-white">
@@ -81,16 +71,12 @@ function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
                     className="w-12 shrink-0 h-12 cursor-default rotate-180 flex items-center justify-center text-white/70 hover:text-white">
                     <Icon size={24} name="more"/>
                 </button>
-            </div> }
+            </div>
             
             <div className='h-full w-full flex px-3 md:px-14 pb-6 items-center justify-center'>
-                { windowWith < 768 ? <img alt={current.name} src={current.cover} className="h-64 object-contain" /> : null }
+                <img alt={current.name} src={current.cover} className="h-64 object-contain" />
             </div>
-            <div className='mx-3 md:mx-14 mb-0 flex gap-x-4 items-end'>
-
-                {windowWith >= 768 ? <div className=' flex items-center justify-center'>
-                    <img className='w-20 h-20 object-cover' src={current.cover} />
-                </div> : null}
+            <div className='mx-3 md:mx-14 mb-0 flex gap-x-4 items-center'>
                 <div className=' md:left-40 w-full md:font-bold'>
                     <div className='text-2xl md:text-3xl md:mb-2 font-bold'>
                         {current.name}
@@ -99,9 +85,12 @@ function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
                         {current.artist}
                     </div>
                 </div>
+                <button onClick={likeSongHandle} className={`cursor-default flex items-center ${liked?.includes(current?.id) ? "!text-primary" : ""} justify-center text-white/70 hover:text-white`}>
+                    <Icon size={24}  name={liked?.includes(current?.id) ? "heartFilled" : "heart"}/>
+                </button>
             </div>
 
-        <div onClick={e => e.stopPropagation()} className="flex mb-16 px-3 md:px-14 flex-col items-center">
+        <div onClick={e => e.stopPropagation()} className="flex mb-16 px-3 flex-col items-center">
                 <div className="w-full flex items-center h-11 pt-auto gap-x-2">
                     <div className="text-[0.688rem] text-white text-opacity-70">
                         {secondsToTime(state?.time)}
@@ -118,7 +107,6 @@ function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
                     </div>
                 </div>
                 <div  className='w-full flex justify-between'>
-                    { windowWith >= 768 ? <div className='w-1/3'></div> : null}
                     <div className="flex items-center gap-x-5 justify-between md:justify-center h-20 w-full md:w-1/3">
                         <button onClick={shuffle} className={`w-8 h-8 cursor-default flex relative items-center justify-center ${isShuffle ? "text-secondary after:block after:bottom-0 after:bg-secondary after:absolute after:translate-x-[-50%] after:rounded-full after:h-1 after:left-[50%] after:w-1" : "text-white/70 hover:text-white"}`}>
                             <Icon size={24} name="shuffle"/>
@@ -136,30 +124,6 @@ function FullScreenPlayer({toggle, state, controls, volumeIcon}) {
                             <Icon size={24} name="loop"/>
                         </button>
                     </div>
-                        { windowWith >= 768 ? <div className='items-center flex justify-end gap-x-5 w-1/3'>
-                            <div className='items-center flex'>                                
-                                <button onClick={controls[state.muted ? "unmute" : "mute"]} className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
-                                    <Icon size={16} name={volumeIcon}/>
-                                </button>
-                                <div className="w-[5.813rem] max-w-full">
-                                    <CustomRange 
-                                            step={0.01}
-                                            min={0}
-                                            max={1}
-                                            value={state?.muted ? 0 : state?.volume}
-                                            onChange={value => {
-                                                controls.unmute() 
-                                                controls.volume(value)
-                                            }}
-                                        />
-                                </div>
-                            </div>
-                        <button
-                            onClick={toggle}
-                            className="w-8 h-8 cursor-default flex items-center justify-center text-white/70 hover:text-white">
-                            <Icon size={24} name="fullScreenOff"/>
-                        </button>
-                    </div> : null}
                 </div>
             </div>
     </div>

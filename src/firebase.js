@@ -265,6 +265,7 @@ export const register = async ({email, password, username}) => {
                 cover: "https://firebasestorage.googleapis.com/v0/b/spotify-web-clone-229ad.appspot.com/o/defaults%2FlikedSongs.png?alt=media&token=6326b213-8954-40fd-8e6a-b8e6314e4ea1",
                 name: "Beğenilen Şarkılar",
                 songs: [],
+                href :"/collection/tracks",
                 userId: user.uid
             }
             await createPlaylist(likedSongData)         

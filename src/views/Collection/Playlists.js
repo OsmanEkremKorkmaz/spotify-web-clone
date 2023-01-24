@@ -1,28 +1,57 @@
 import Title from "components/Title";
-import songs from "data/songs"
-import playlists from "data/playlists"
 import SongItem from "components/SongItem";
 import { Icon } from 'Icons'
 import { useDispatch, useSelector } from "react-redux";
-import { setCurrent } from 'redux/player/player';
+import { setCurrent, setQueue } from 'redux/player/player';
+import { useEffect, useState } from "react";
+import { getPlaylist, getSongById } from "../../firebase";
 
 function Playlists() {
-    const item = songs[0]
+
+    const {user} = useSelector(state => state.auth)
+    const [liked, setLiked] = useState(false)
+
+    
+    const [songs, setSongs] = useState([])
+
+    const setSongsAsync = async (items) => {
+        await items?.map(async s => await getSongAsync(s).then(song => setSongs(prev => [...prev, song])))
+      }
+  
+      const getSongAsync = async (id) => {
+        return await getSongById(id)
+      }
+
+      useEffect(() => {
+        if(liked){
+  
+          setSongsAsync(liked?.songs)
+        }
+  
+      },[liked])
+      useEffect(() => {
+        setSongs([])
+      }, [])
+
+    useEffect(() => {
+        if(user){
+
+            getPlaylist(user.liked).then(res => setLiked(res))
+        }
+    }, [user])
     const dispatch = useDispatch();
     const {current, playing, controls} = useSelector((state) => state.player);
-    const updateCurrent = () => {
-        if (current?.id === item.id){
-            if(playing){
-                controls.pause()
-            } else {
-                controls.play()
-            }
-        } else {
-            dispatch(setCurrent(item))
+    const updateCurrent = (item) => {
+        if (current?.id !== item.id) {
+          dispatch(setQueue(songs)) 
+          dispatch(setCurrent(item))
         }
-    }
-
-    const isCurrentItem = (current?.id === item.id && playing)
+        if(current){
+  
+          playing ? controls.pause() : controls.play()
+        }
+      }
+    const isCurrentItem = (liked.songs?.includes(current?.id) && playing)
 
     return (
         
@@ -35,13 +64,13 @@ function Playlists() {
                     <div className="flex justify-end flex-col h-full">
                         <div className="mb-8">
                             <div className="overflow-hidden whitespace-normal text-ellipsis line-clamp-3 max-h-[130px] w-full text-white">
-                                {songs.map(song => (
-                                    <span >
-                                        {song.id !== 1 && <span className="opacity-70"> • </span> }
+                                {songs.map((song,i) => (
+                                    <span key={i} >
+                                        {i !== 0 && <span className="opacity-70"> • </span> }
                                         <span className="!opacity-100">{song.artist}</span>
                                         &nbsp;
                                         <span className="opacity-70">
-                                            {song.title}
+                                            {song.name}
                                         </span>
                                     </span>
                                 ))}
@@ -51,9 +80,9 @@ function Playlists() {
                             <div className="font-bold text-[2rem] pb-1 overflow-hidden whitespace-nowrap text-ellipsis tracking-tighter">Beğenilen Şarkılar</div>
                             <div className="text-white lowercase">{songs.length} beğenilen şarkılar</div>
                         </div>
-                        <div className="relative ">
+                        <div onClick={e => e.stopPropagation()} className="relative ">
                             <button
-                                onClick={updateCurrent}
+                                onClick={() => updateCurrent(!current || current === undefined ? songs[0] : current)}
                                 className={`w-12 h-12 rounded-full bg-primary absolute bottom-2 right-2 text-black items-center justify-center group-hover:flex group-focus:flex transition-all ${!isCurrentItem ? "hidden" : "flex"}`}>
                                 <Icon name={(isCurrentItem) ? "pause" : "play"} size={24}/>
                             </button>
@@ -63,12 +92,12 @@ function Playlists() {
                     </div>
 
                 </div>
-                {playlists.map(item => (
+                {user.playlists.map((item,i)=> (
                     // <div className="p-4 rounded-md bg-footer transition-colors duration-300 h-full">
                     //     <img className="mb-4" src={playlist.cover} />
                     // </div>
-                    <SongItem key={item.id} item={item} isNotUser={true} />
-                ))}
+                    <SongItem key={i} item={item} isNotUser={true} />
+                    ))}
             </div>
         </div>
     )

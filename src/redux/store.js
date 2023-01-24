@@ -4,11 +4,12 @@ import queueSlice from './queue/queue'
 import searchSlice from './search/search'
 import authSlice from './auth/auth'
 import modalsSlice from './modals/modals'
+import showSlice from './show/show'
 
 export default configureStore({
   reducer: {
       player: playerSlice,
-      queue: queueSlice,
+      show: showSlice,
       search: searchSlice,
       auth: authSlice,
       modals: modalsSlice

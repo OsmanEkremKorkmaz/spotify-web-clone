@@ -4,6 +4,7 @@ import { logout } from '../../firebase';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import ProfilePhoto from 'components/ProfilePhoto';
+import { useWindowWidth } from '@react-hook/window-size';
 
 export default function User(){
 
@@ -13,6 +14,8 @@ export default function User(){
         const response = await logout();
     }
 
+    const windowWith = useWindowWidth()
+
     return currentUser ? (
         <Menu as={"nav"} className="relative">
             {({ open }) => (
@@ -21,10 +24,14 @@ export default function User(){
                         <div  className="max-w-[28px] max-h-[28px] w-full h-full rounded-full bg-[#535353] flex justify-center items-center">
                             <ProfilePhoto svgSize={16} classnames="max-w-[28px] max-h-[28px] !mr-0 min-w-[28px] min-h-[28px]" />
                         </div>
-                        <span>{currentUser.username}</span>
-                        <span className={`${open ? "rotate-180" : ""} mr-[6px]`}>
-                            <Icon size={16} name="downDir"/>
-                        </span>                
+                        {
+                            windowWith >= 1024 && <>
+                            <span>{currentUser.username}</span>
+                            <span className={`${open ? "rotate-180" : ""} mr-[6px]`}>
+                                <Icon size={16} name="downDir"/>
+                            </span>                
+                            </>
+                        }
                         </Menu.Button>
                     <Menu.Items className={"absolute top-full bg-active rounded p-1 translate-y-2 min-w-[196px] right-0"}>
                         <Menu.Item>

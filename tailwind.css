@@ -3,15 +3,17 @@
 @tailwind components;
 
 @layer base {
-    ::-webkit-scrollbar {
-        background: transparent;
-        margin: 4px;
-        width: 12px;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: hsla(0,0%,100%,.3);
-        min-height: 30px;
-        width: 12px;
+    @media only screen and (min-width: 768px) {
+        ::-webkit-scrollbar {
+            background: transparent;
+            margin: 4px;
+            width: 12px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: hsla(0,0%,100%,.3);
+            min-height: 30px;
+            width: 12px;
+        }
     }
     html, body, #root {
         @apply h-full bg-backdrop text-white antialiased
@@ -39,6 +41,12 @@
         "image save-button"
         "image ."
         "disclaimer disclaimer";
+    }
+    .unset {
+        white-space: unset;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
     }
     @media only screen and (max-width: 768px) {
         .table-grid {
