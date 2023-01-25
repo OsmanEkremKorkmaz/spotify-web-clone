@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useWindowWidth } from "@react-hook/window-size";
 import ResponsivePlaylistShelf from "components/ResponsivePlaylistShelf";
 import { Icon } from "Icons";
+import User from "components/Navbar/User";
 function Home(){
     const [items,setItems] = useState([])
     
@@ -17,7 +18,10 @@ function Home(){
         if(windowWith >= 768) {
             getAllSongs().then(res => res.forEach(doc => {setItems(prev => [...prev, doc.data()])}))
         } else {
-            setItems([user.liked, ...user.playlists])
+            if(user){
+
+                setItems([user.liked, ...user.playlists])
+            }
         }
     }, [windowWith, user.liked, user.playlists])
 
@@ -31,6 +35,7 @@ function Home(){
                 <button className="h-12 w-12 flex items-center justify-center shrink-0">
                     <Icon size={24} name="settings" />
                 </button>
+                <User />
             </div>
             <ResponsivePlaylistShelf title="Kısayollar" items={items} />
         </div>
