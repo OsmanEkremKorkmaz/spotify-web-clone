@@ -38,6 +38,7 @@ function Home(){
                 <User />
             </div>
             <ResponsivePlaylistShelf title="Kısayollar" items={items} />
+            
         </div>
     )
 }
